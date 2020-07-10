@@ -29,6 +29,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// jsonBlob := []byte(`
+	//     {"path": "/urlshort, "url": "https://github.com/gophercises/urlshort",}
+	// `)
+
+	// jsonHandler, err := urlshort.JSONHandler(jsonBlob, mapHandler)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	fmt.Println("Starting the server on :8080")
 	http.ListenAndServe(":8080", yamlHandler)
 }
