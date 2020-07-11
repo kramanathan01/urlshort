@@ -65,7 +65,7 @@ func main() {
 	}
 
 	log.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", jsonHandler)
+	http.ListenAndServe("localhost:8080", jsonHandler)
 }
 
 func defaultMux() *http.ServeMux {
