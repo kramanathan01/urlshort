@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"os/user"
+	"syscall"
+	"time"
 
 	"urlshort"
 )
@@ -28,49 +32,48 @@ func main() {
 		log.Fatal(err)
 	}
 	defer file.Close()
-
 	log.SetOutput(file)
 
 	mux := defaultMux()
-
-	// Build the MapHandler using the mux as the fallback
-	pathsToUrls := map[string]string{
-		"/urlshort-godoc": "https://godoc.org/github.com/gophercises/urlshort",
-		"/yaml-godoc":     "https://godoc.org/gopkg.in/yaml.v2",
-	}
-	mapHandler := urlshort.MapHandler(pathsToUrls, mux)
-
-	// Build the YAMLHandler using the mapHandler as the
-	// fallback
-	// yaml := `
-	// - path: /urlshort
-	//   url: https://github.com/gophercises/urlshort
-	// - path: /urlshort-final
-	//   url: https://github.com/gophercises/urlshort/tree/solution
-	// `
-	// yamlHandler, err := urlshort.YAMLHandler([]byte(yaml), mapHandler)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// _ = yamlHandler
 
 	jsonBlob, err := getContent(mapFile)
 	if err != nil {
 		log.Panicf("Error getting map JSON: %v", err)
 	}
 
-	jsonHandler, err := urlshort.JSONHandler(jsonBlob, mapHandler)
+	jsonHandler, err := urlshort.JSONHandler(jsonBlob, mux)
 	if err != nil {
 		log.Panicf("Error in Handler: %v", err)
 	}
 
 	srv := &http.Server{
-		Addr:    "localhost:8080",
-		Handler: jsonHandler,
+		Addr:         "localhost:8080",
+		ReadTimeout:  120 * time.Second,
+		WriteTimeout: 120 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Handler:      jsonHandler,
 	}
 
-	log.Println("Starting the server on :8080")
-	srv.ListenAndServe()
+	//Start server and listen
+	go func() {
+		log.Println("Starting the server on :8080")
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Printf("HTTP ListenAndServe: %v", err)
+		}
+	}()
+
+	// Graceful Shutdown on SIGINT or SIGTERM
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = srv.Shutdown(ctx)
+	if err != nil {
+		log.Fatalf("Failed to shutdown server %v", err)
+	}
+	log.Println("Graceful shutdown of server")
 }
 
 func defaultMux() *http.ServeMux {

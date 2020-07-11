@@ -28,31 +28,6 @@ type pathURL struct {
 	URL  string `yaml:"url"`
 }
 
-// YAMLHandler will parse the provided YAML and then return
-// an http.HandlerFunc (which also implements http.Handler)
-// that will attempt to map any paths to their corresponding
-// URL. If the path is not provided in the YAML, then the
-// fallback http.Handler will be called instead.
-//
-// YAML is expected to be in the format:
-//
-//     - path: /some-path
-//       url: https://www.some-url.com/demo
-//
-// The only errors that can be returned all related to having
-// invalid YAML data.
-//
-// See MapHandler to create a similar http.HandlerFunc via
-// a mapping of paths to urls.
-// func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-// 	pathUrls, err := parseYAML(yml)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	pathToUrls := buildMap(pathUrls)
-// 	return MapHandler(pathToUrls, fallback), nil
-// }
-
 // JSONHandler will parse the provided JSON and then return
 // an http.HandlerFunc (which also implements http.Handler)
 // that will attempt to map any paths to their corresponding
@@ -77,15 +52,6 @@ func JSONHandler(jsn []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	pathToUrls := buildMap(pathUrls)
 	return MapHandler(pathToUrls, fallback), nil
 }
-
-// func parseYAML(data []byte) ([]pathURL, error) {
-// 	var pathUrls []pathURL
-// 	err := yaml.Unmarshal(data, &pathUrls)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return pathUrls, nil
-// }
 
 func parseJSON(data []byte) ([]pathURL, error) {
 	var pathUrls []pathURL
