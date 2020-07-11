@@ -64,8 +64,13 @@ func main() {
 		log.Panicf("Error in Handler: %v", err)
 	}
 
+	srv := &http.Server{
+		Addr:    "localhost:8080",
+		Handler: jsonHandler,
+	}
+
 	log.Println("Starting the server on :8080")
-	http.ListenAndServe("localhost:8080", jsonHandler)
+	srv.ListenAndServe()
 }
 
 func defaultMux() *http.ServeMux {
