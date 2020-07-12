@@ -56,7 +56,7 @@ sudo sysctl net.inet.ip.forwarding=1
 
 ```
 sudo echo “rdr pass on lo0 inet proto tcp from any to 127.0.0.1 \
-port 80 -> 127.0.0.1 port 8080” > /etc/pf.anchors/map
+           port 80 -> 127.0.0.1 port 8080” > /etc/pf.anchors/map
 ```
 
 3. Add the following lines to /etc/pf.conf
