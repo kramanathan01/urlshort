@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"os/user"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -22,9 +23,9 @@ func main() {
 		panic(err)
 	}
 
-	home := user.HomeDir + "/.map"
-	mapFile := home + "/map.json"
-	logFile := home + "/map.log"
+	home := user.HomeDir
+	mapFile := filepath.Join(home, ".map.json")
+	logFile := filepath.Join(home, ".map.log")
 
 	// Enable Logging
 	file, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
