@@ -88,6 +88,15 @@ func hello(w http.ResponseWriter, r *http.Request) {
 }
 
 func getContent(file string) ([]byte, error) {
+	// fi, err := os.Lstat(file)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// if fi.Mode()&os.ModeSymlink != 0 {
+	// 	file, _ = os.Readlink(file)
+	// }
+
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
