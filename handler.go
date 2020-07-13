@@ -3,6 +3,7 @@ package urlshort
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -13,7 +14,8 @@ import (
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if path, ok := pathsToUrls[r.URL.Path]; ok {
+		urlpath := strings.TrimLeft(r.URL.Path, "/")
+		if path, ok := pathsToUrls[urlpath]; ok {
 			http.Redirect(w, r, path, http.StatusFound)
 			return
 		}
@@ -24,8 +26,8 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 
 // Struct members need to be exported for Unmarshalling to work
 type pathURL struct {
-	Path string `yaml:"path"`
-	URL  string `yaml:"url"`
+	Path string `json:"path"`
+	URL  string `json:"url"`
 }
 
 // JSONHandler will parse the provided JSON and then return
