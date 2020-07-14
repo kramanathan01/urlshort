@@ -24,12 +24,6 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 	}
 }
 
-// Struct members need to be exported for Unmarshalling to work
-type pathURL struct {
-	Path string `json:"path"`
-	URL  string `json:"url"`
-}
-
 // JSONHandler will parse the provided JSON and then return
 // an http.HandlerFunc (which also implements http.Handler)
 // that will attempt to map any paths to their corresponding
@@ -37,9 +31,10 @@ type pathURL struct {
 // fallback http.Handler will be called instead.
 //
 // JSON is expected to be in the format:
-// [
-// 	{"path": "/some-path", "url": "https://www.some-url.com/demo"}
-// ]
+// 	{
+// 	  "shortpath": "url",
+//    "shortpath": "url"
+//  }
 //
 // The only errors that can be returned all related to having
 // invalid JSON data.
@@ -51,23 +46,14 @@ func JSONHandler(jsn []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	if err != nil {
 		return nil, err
 	}
-	pathToUrls := buildMap(pathUrls)
-	return MapHandler(pathToUrls, fallback), nil
+	return MapHandler(pathUrls, fallback), nil
 }
 
-func parseJSON(data []byte) ([]pathURL, error) {
-	var pathUrls []pathURL
+func parseJSON(data []byte) (map[string]string, error) {
+	pathUrls := make(map[string]string)
 	err := json.Unmarshal(data, &pathUrls)
 	if err != nil {
 		return nil, err
 	}
 	return pathUrls, nil
-}
-
-func buildMap(pathUrls []pathURL) map[string]string {
-	pathToUrls := make(map[string]string)
-	for _, pu := range pathUrls {
-		pathToUrls[pu.Path] = pu.URL
-	}
-	return pathToUrls
 }
