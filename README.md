@@ -13,15 +13,10 @@ $ go install .
 Setup a JSON file with short path and matching URL. See example below.
 ```
 echo "
-[{
-    "path": "/nyt",
-    "url": "https://www.nytimes.com"
-  },
-  {
-    "path": "/wp",
-    "url": "https://www.washingtonpost.com"
-  }
-]" > ~/.map.json
+{
+  "/nyt": "https://www.nytimes.com",
+  "/wp": "https://www.washingtonpost.com"
+}" > ~/.map.json
 ```
 
 ### Enjoy browsing
