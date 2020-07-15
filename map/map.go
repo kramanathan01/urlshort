@@ -23,18 +23,9 @@ var (
 
 func main() {
 
-	// mux := defaultMux()
-
-	// pathUrls, err := parseJSON(mapFile)
-	// if err != nil {
-	// 	log.Panicf("Error getting map JSON: %v", err)
-	// }
-
-	// mapHandler := urlshort.MapHandler(pathUrls, mux)
-
 	handler := setHandler()
 
-	// Start Server
+	// Start server
 	srv := &http.Server{
 		Addr:         "localhost:8080",
 		ReadTimeout:  120 * time.Second,
@@ -62,11 +53,29 @@ func init() {
 	mapFile = filepath.Join(home, ".map.json")
 }
 
+func setHandler() http.HandlerFunc {
+	mux := defaultMux()
+
+	pathUrls, err := parseJSON(mapFile)
+	if err != nil {
+		log.Panicf("Error getting map JSON: %v", err)
+	}
+
+	return urlshort.MapHandler(pathUrls, mux)
+}
+
 func startServer(srv *http.Server) {
 	log.Println("Starting the server on :8080")
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Printf("HTTP ListenAndServe: %v", err)
 	}
+}
+
+func closeServer(srv *http.Server) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	log.Println("Graceful shutdown of server")
+	return srv.Shutdown(ctx)
 }
 
 func signalWait(srv *http.Server, mfile string) error {
@@ -85,14 +94,12 @@ func signalWait(srv *http.Server, mfile string) error {
 			// 	log.Panicf("Error getting map JSON: %v", err)
 			// }
 		case os.Interrupt, syscall.SIGTERM:
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
-			log.Println("Graceful shutdown of server")
-			return srv.Shutdown(ctx)
+			return closeServer(srv)
 		}
 	}
 
 }
+
 func defaultMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", hello)
@@ -128,15 +135,4 @@ func parseJSON(file string) (map[string]string, error) {
 		return nil, err
 	}
 	return m, nil
-}
-
-func setHandler() http.HandlerFunc {
-	mux := defaultMux()
-
-	pathUrls, err := parseJSON(mapFile)
-	if err != nil {
-		log.Panicf("Error getting map JSON: %v", err)
-	}
-
-	return urlshort.MapHandler(pathUrls, mux)
 }
