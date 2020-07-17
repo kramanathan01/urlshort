@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"urlshort"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 var (
@@ -51,6 +53,7 @@ func init() {
 
 	home = user.HomeDir
 	mapFile = filepath.Join(home, ".map.json")
+
 }
 
 func setHandler() http.HandlerFunc {
@@ -82,20 +85,50 @@ func signalWait(srv *http.Server, mfile string) error {
 	// Handle signals
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM, syscall.SIGUSR1)
-	for {
-		sig := <-sigs
-		log.Printf("Received %+v", sig)
+	//Set up a file watcher
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	defer watcher.Close()
 
-		switch sig {
-		case syscall.SIGUSR1:
-			log.Println("Reloading config")
-			handler := setHandler()
-			srv.Handler = handler
-		case os.Interrupt, syscall.SIGTERM:
-			return closeServer(srv)
-		}
+	err = watcher.Add(mfile)
+	if err != nil {
+		log.Fatal(err)
+		return err
 	}
 
+	for {
+		select {
+		case sig := <-sigs:
+			log.Printf("Received %+v", sig)
+
+			switch sig {
+			case syscall.SIGUSR1:
+				log.Println("Reloading config")
+				handler := setHandler()
+				srv.Handler = handler
+			case os.Interrupt, syscall.SIGTERM:
+				return closeServer(srv)
+			}
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return nil
+			}
+			log.Println("event:", event)
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				log.Println("Reloading config")
+				handler := setHandler()
+				srv.Handler = handler
+			}
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return err
+			}
+			log.Println("error:", err)
+		}
+	}
 }
 
 func defaultMux() *http.ServeMux {
