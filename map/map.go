@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"os/user"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -17,16 +18,19 @@ import (
 )
 
 var (
-	home, mapFile string
+	mapFile string
+	port    = flag.Int("p", 8080, "listening port")
 )
 
 func main() {
 
+	flag.Parse()
 	handler := urlshort.SetHandler(mapFile)
+	addr := fmt.Sprintf("localhost:%v", *port)
 
 	// Start server
 	srv := &http.Server{
-		Addr:         "localhost:8080",
+		Addr:         addr,
 		ReadTimeout:  120 * time.Second,
 		WriteTimeout: 120 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -43,18 +47,16 @@ func main() {
 
 func init() {
 	// READ json map from ~/.map/map.json
-	user, err := user.Current()
+	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
-
-	home = user.HomeDir
 	mapFile = filepath.Join(home, ".map.json")
 
 }
 
 func startServer(srv *http.Server) {
-	log.Println("Starting the server on :8080")
+	log.Printf("Starting the server on localhost:%+v", *port)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Printf("HTTP ListenAndServe: %v", err)
 	}
@@ -88,11 +90,9 @@ func signalWait(srv *http.Server, mfile string) error {
 	for {
 		select {
 		case sig := <-sigs:
-			log.Printf("Received %+v", sig)
-
 			switch sig {
 			case syscall.SIGUSR1:
-				log.Println("Reloading config")
+				log.Println("User 1 signal received. Reloading config...")
 				handler := urlshort.SetHandler(mfile)
 				srv.Handler = handler
 			case os.Interrupt, syscall.SIGTERM:
@@ -100,11 +100,10 @@ func signalWait(srv *http.Server, mfile string) error {
 			}
 		case event, ok := <-watcher.Events:
 			if !ok {
-				return nil
+				break
 			}
-			log.Println("event:", event)
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				log.Println("Reloading config")
+				log.Println("Config file changed. Reloading config...")
 				handler := urlshort.SetHandler(mfile)
 				srv.Handler = handler
 			}
