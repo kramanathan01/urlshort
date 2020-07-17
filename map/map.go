@@ -89,10 +89,8 @@ func signalWait(srv *http.Server, mfile string) error {
 		switch sig {
 		case syscall.SIGUSR1:
 			log.Println("Reloading config")
-			// pathUrls, err := parseJSON(mfile)
-			// if err != nil {
-			// 	log.Panicf("Error getting map JSON: %v", err)
-			// }
+			handler := setHandler()
+			srv.Handler = handler
 		case os.Interrupt, syscall.SIGTERM:
 			return closeServer(srv)
 		}
@@ -102,12 +100,12 @@ func signalWait(srv *http.Server, mfile string) error {
 
 func defaultMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", hello)
+	mux.HandleFunc("/", msg)
 	return mux
 }
 
-func hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello, world!")
+func msg(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Set path:url in $HOME/.map.json")
 }
 
 func getContent(file string) ([]byte, error) {
