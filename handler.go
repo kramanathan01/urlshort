@@ -2,7 +2,11 @@ package urlshort
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -24,36 +28,50 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 	}
 }
 
-// JSONHandler will parse the provided JSON and then return
-// an http.HandlerFunc (which also implements http.Handler)
-// that will attempt to map any paths to their corresponding
-// URL. If the path is not provided in the JSON, then the
-// fallback http.Handler will be called instead.
-//
-// JSON is expected to be in the format:
-// 	{
-// 	  "shortpath": "url",
-//    "shortpath": "url"
-//  }
-//
-// The only errors that can be returned all related to having
-// invalid JSON data.
-//
-// See MapHandler to create a similar http.HandlerFunc via
-// a mapping of paths to urls.
-func JSONHandler(jsn []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	pathUrls, err := parseJSON(jsn)
+func SetHandler(mfile string) http.HandlerFunc {
+	mux := defaultMux()
+
+	pathUrls, err := parseJSON(mfile)
 	if err != nil {
-		return nil, err
+		log.Panicf("Error getting map JSON: %v", err)
 	}
-	return MapHandler(pathUrls, fallback), nil
+
+	return MapHandler(pathUrls, mux)
 }
 
-func parseJSON(data []byte) (map[string]string, error) {
-	pathUrls := make(map[string]string)
-	err := json.Unmarshal(data, &pathUrls)
+func defaultMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", msg)
+	return mux
+}
+
+func msg(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Set path:url in $HOME/.map.json")
+}
+
+func getContent(file string) ([]byte, error) {
+	f, err := os.Open(file)
 	if err != nil {
 		return nil, err
 	}
-	return pathUrls, nil
+	defer f.Close()
+
+	c, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func parseJSON(file string) (map[string]string, error) {
+	m := make(map[string]string)
+	jb, err := getContent(file)
+	if err != nil {
+		log.Panicf("Error getting map JSON: %v", err)
+	}
+	err = json.Unmarshal(jb, &m)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
 }

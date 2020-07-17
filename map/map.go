@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +22,7 @@ var (
 
 func main() {
 
-	handler := setHandler()
+	handler := urlshort.SetHandler(mapFile)
 
 	// Start server
 	srv := &http.Server{
@@ -54,17 +51,6 @@ func init() {
 	home = user.HomeDir
 	mapFile = filepath.Join(home, ".map.json")
 
-}
-
-func setHandler() http.HandlerFunc {
-	mux := defaultMux()
-
-	pathUrls, err := parseJSON(mapFile)
-	if err != nil {
-		log.Panicf("Error getting map JSON: %v", err)
-	}
-
-	return urlshort.MapHandler(pathUrls, mux)
 }
 
 func startServer(srv *http.Server) {
@@ -107,7 +93,7 @@ func signalWait(srv *http.Server, mfile string) error {
 			switch sig {
 			case syscall.SIGUSR1:
 				log.Println("Reloading config")
-				handler := setHandler()
+				handler := urlshort.SetHandler(mfile)
 				srv.Handler = handler
 			case os.Interrupt, syscall.SIGTERM:
 				return closeServer(srv)
@@ -119,7 +105,7 @@ func signalWait(srv *http.Server, mfile string) error {
 			log.Println("event:", event)
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				log.Println("Reloading config")
-				handler := setHandler()
+				handler := urlshort.SetHandler(mfile)
 				srv.Handler = handler
 			}
 		case err, ok := <-watcher.Errors:
@@ -129,41 +115,4 @@ func signalWait(srv *http.Server, mfile string) error {
 			log.Println("error:", err)
 		}
 	}
-}
-
-func defaultMux() *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", msg)
-	return mux
-}
-
-func msg(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Set path:url in $HOME/.map.json")
-}
-
-func getContent(file string) ([]byte, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	c, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-func parseJSON(file string) (map[string]string, error) {
-	m := make(map[string]string)
-	jb, err := getContent(file)
-	if err != nil {
-		log.Panicf("Error getting map JSON: %v", err)
-	}
-	err = json.Unmarshal(jb, &m)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
 }
