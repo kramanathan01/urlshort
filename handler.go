@@ -10,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"urlshort/assets"
 )
 
 var pathUrls = make(map[string]string)
@@ -57,10 +59,16 @@ func msg(w http.ResponseWriter, r *http.Request) {
 }
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
-	listTemplate := template.Must(template.New("list.gohtml").ParseFiles("../list.gohtml"))
+	listHTML, err := assets.Asset("templates/list.gohtml")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	ll := string(listHTML)
+	listTemplate := template.Must(template.New("list").Parse(ll))
 	push(w, "../static/style.css")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	render(w, r, listTemplate, "list.gohtml", pathUrls)
+	render(w, r, listTemplate, "list", pathUrls)
 }
 
 func getContent(file string) ([]byte, error) {
