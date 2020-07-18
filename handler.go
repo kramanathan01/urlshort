@@ -1,6 +1,7 @@
 package urlshort
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,7 +9,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"text/template"
 )
+
+var pathUrls = make(map[string]string)
 
 // MapHandler will return an http.HandlerFunc (which also
 // implements http.Handler) that will attempt to map any
@@ -29,9 +33,10 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 }
 
 func SetHandler(mfile string) http.HandlerFunc {
+	var err error
 	mux := defaultMux()
 
-	pathUrls, err := parseJSON(mfile)
+	pathUrls, err = parseJSON(mfile)
 	if err != nil {
 		log.Panicf("Error getting map JSON: %v", err)
 	}
@@ -42,11 +47,20 @@ func SetHandler(mfile string) http.HandlerFunc {
 func defaultMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", msg)
+	mux.HandleFunc("/list", listHandler)
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../static"))))
 	return mux
 }
 
 func msg(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Set path:url in $HOME/.map.json")
+}
+
+func listHandler(w http.ResponseWriter, r *http.Request) {
+	listTemplate := template.Must(template.New("list.gohtml").ParseFiles("../list.gohtml"))
+	push(w, "../static/style.css")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	render(w, r, listTemplate, "list.gohtml", pathUrls)
 }
 
 func getContent(file string) ([]byte, error) {
@@ -74,4 +88,23 @@ func parseJSON(file string) (map[string]string, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+func push(w http.ResponseWriter, resource string) {
+	pusher, ok := w.(http.Pusher)
+	if ok {
+		if err := pusher.Push(resource, nil); err == nil {
+			fmt.Printf("Pusher error: %v\n", err)
+			return
+		}
+	}
+}
+
+func render(w http.ResponseWriter, r *http.Request, tpl *template.Template, name string, data interface{}) {
+	buf := new(bytes.Buffer)
+	if err := tpl.ExecuteTemplate(buf, name, data); err != nil {
+		fmt.Printf("\nRender Error: %v\n", err)
+		return
+	}
+	w.Write(buf.Bytes())
 }
