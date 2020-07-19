@@ -53,8 +53,6 @@ func defaultMux() *http.ServeMux {
 	mux.HandleFunc("/", msg)
 	mux.HandleFunc("/list", listHandler)
 	mux.HandleFunc("/static/style.css", styleHandler)
-	// fs := http.FileServer(http.Dir("/static/"))
-	// mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	return mux
 }
 
@@ -75,9 +73,6 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	listTemplate := template.Must(template.New("list").Parse(listHTML))
-
-	css, _ := getAsset("static/style.css")
-	push(w, css)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	render(w, r, listTemplate, "list", pathUrls)
 }
@@ -107,16 +102,6 @@ func parseJSON(file string) (map[string]string, error) {
 		return nil, err
 	}
 	return m, nil
-}
-
-func push(w http.ResponseWriter, resource string) {
-	pusher, ok := w.(http.Pusher)
-	if ok {
-		if err := pusher.Push(resource, nil); err == nil {
-			fmt.Printf("Pusher error: %v\n", err)
-			return
-		}
-	}
 }
 
 func render(w http.ResponseWriter, r *http.Request, tpl *template.Template, name string, data interface{}) {
