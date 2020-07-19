@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 
@@ -52,18 +53,13 @@ func defaultMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", msg)
 	mux.HandleFunc("/list", listHandler)
-	mux.HandleFunc("/static/style.css", styleHandler)
+	mux.HandleFunc("/static/", staticHandler)
 	return mux
 }
 
 func msg(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Set path:url in $HOME/.map.json")
-}
-
-func styleHandler(w http.ResponseWriter, r *http.Request) {
-	css, _ := assets.Asset("static/style.css")
-	w.Header().Set("Content-Type", "text/css")
-	w.Write(css)
+	http.NotFound(w, r)
+	log.Printf("Path not found: %v\n", r.URL.Path)
 }
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
@@ -119,4 +115,20 @@ func getAsset(asset string) (string, error) {
 		return "", err
 	}
 	return string(a), nil
+}
+
+func staticHandler(w http.ResponseWriter, r *http.Request) {
+	urlpath := strings.TrimLeft(r.URL.Path, "/")
+	buf, _ := assets.Asset(urlpath)
+	s := strings.Split(path.Base(urlpath), ".")
+	log.Println(s)
+	switch s[1] {
+	case "css":
+		w.Header().Set("Content-Type", "text/css")
+	case "js":
+		w.Header().Set("Content-Type", "text/javascript")
+	case "png":
+		w.Header().Set("Content-Type", "image/png")
+	}
+	w.Write(buf)
 }
