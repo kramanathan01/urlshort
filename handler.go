@@ -34,6 +34,8 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 	}
 }
 
+// SetHandler parses the file contents intp a map and returns a http.HandlerFunc
+// capable of serving requests
 func SetHandler(mfile string) http.HandlerFunc {
 	var err error
 	mux := defaultMux()
@@ -50,7 +52,9 @@ func defaultMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", msg)
 	mux.HandleFunc("/list", listHandler)
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../static"))))
+	mux.HandleFunc("/static/style.css", styleHandler)
+	// fs := http.FileServer(http.Dir("/static/"))
+	// mux.Handle("/static/", http.StripPrefix("/static/", fs))
 	return mux
 }
 
@@ -58,15 +62,22 @@ func msg(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Set path:url in $HOME/.map.json")
 }
 
+func styleHandler(w http.ResponseWriter, r *http.Request) {
+	css, _ := assets.Asset("static/style.css")
+	w.Header().Set("Content-Type", "text/css")
+	w.Write(css)
+}
+
 func listHandler(w http.ResponseWriter, r *http.Request) {
-	listHTML, err := assets.Asset("templates/list.gohtml")
+	listHTML, err := getAsset("templates/list.gohtml")
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	ll := string(listHTML)
-	listTemplate := template.Must(template.New("list").Parse(ll))
-	push(w, "../static/style.css")
+	listTemplate := template.Must(template.New("list").Parse(listHTML))
+
+	css, _ := getAsset("static/style.css")
+	push(w, css)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	render(w, r, listTemplate, "list", pathUrls)
 }
@@ -115,4 +126,12 @@ func render(w http.ResponseWriter, r *http.Request, tpl *template.Template, name
 		return
 	}
 	w.Write(buf.Bytes())
+}
+
+func getAsset(asset string) (string, error) {
+	a, err := assets.Asset(asset)
+	if err != nil {
+		return "", err
+	}
+	return string(a), nil
 }
