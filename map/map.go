@@ -23,7 +23,6 @@ var (
 )
 
 func main() {
-
 	flag.Parse()
 	handler := urlshort.SetHandler(mapFile)
 	addr := fmt.Sprintf("localhost:%v", *port)

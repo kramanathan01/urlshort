@@ -1,7 +1,8 @@
 table.blueTable {
   font-family: Verdana, Geneva, sans-serif;
   border: 1px solid #1C6EA4;
-  background-color: #EEEEEE;
+  margin-right: 40px;
+  /* background-color: #EEEEEE; */
   width: 75%;
   text-align: left;
   border-collapse: collapse;
@@ -9,16 +10,23 @@ table.blueTable {
 
 table.blueTable td,
 table.blueTable th {
-  border: 1px solid #AAAAAA;
   padding: 3px 2px;
 }
 
-table.blueTable tbody td {
-  font-size: 13px;
+table.blueTable th {
+  border: 1px solid #AAAAAA;
 }
 
-table.blueTable tr:nth-child(even) {
-  background: #D0E4F5;
+table.blueTable td {
+  border-bottom: 1px solid #ddd;
+}
+
+table.blueTable tbody td {
+  font-size: 16px;
+}
+
+table.blueTable tr:not(.thead):hover {
+  background-color: #f1f1f1;
 }
 
 table.blueTable thead {
@@ -30,7 +38,7 @@ table.blueTable thead {
 }
 
 table.blueTable thead th {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: bold;
   color: #FFFFFF;
   border-left: 2px solid #D0E4F5;
@@ -40,21 +48,21 @@ table.blueTable thead th:first-child {
   border-left: none;
 }
 
+.mainDiv {
+  width: 75%;
+  text-align: center;
+}
+
 input.searchText {
   background-image: url('/static/searchicon.png');
-  /* Add a search icon to input */
   background-position: 10px 12px;
-  /* Position the search icon */
   background-repeat: no-repeat;
-  /* Do not repeat the icon image */
-  width: 75%;
-  /* Full-width */
+  width: 100%;
   font-size: 16px;
-  /* Increase font-size */
-  padding: 12px 20px 12px 40px;
-  /* Add some padding */
+  padding-top: 12px;
+  padding-bottom: 12px;
+  padding-left: 40px;
   border: 1px solid #ddd;
-  /* Add a grey border */
   margin-bottom: 12px;
-  /* Add some space below the input */
+  box-sizing: border-box;
 }

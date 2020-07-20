@@ -1,8 +1,6 @@
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
 github.com/fsnotify/fsnotify
-# github.com/jteeuwen/go-bindata v3.0.7+incompatible
-## explicit
 # golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
 ## explicit
 golang.org/x/sys/internal/unsafeheader

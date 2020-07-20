@@ -8,13 +8,15 @@
         <script src="/static/map.js"></script>
     </head>
     <body>
-      <h1>Shortcuts</h1>
-      <input type="text" class="searchText" id="searchText" onkeyup="filterRows()" placeholder="Search shortcuts..">
+      <div class="mainDiv">
+        <h1>Shortcuts</h1>
+        <input type="text" class="searchText" id="searchText" onkeyup="filterRows()" placeholder="Search shortcuts..">
+      </div>
       <table class="blueTable" id="sTable">
         <thead>
-          <tr>
-          <th>Shortcut</th>
-          <th>Full URL</th>
+          <tr class="thead">
+          <th onclick="sortTable(0)">Shortcut</th>
+          <th onclick="sortTable(1)">Full URL</th>
           </tr>
         </thead>
         <tbody>
