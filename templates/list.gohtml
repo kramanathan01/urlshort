@@ -17,13 +17,15 @@
           <tr class="thead">
           <th onclick="sortTable(0)">Shortcut</th>
           <th onclick="sortTable(1)">Full URL</th>
+          <th onclick="sortTable(2)">Visits</th>
           </tr>
         </thead>
         <tbody>
-          {{range $key, $value := .}}
+          {{range .}}
           <tr>
-            <td>{{$key}}</td>
-            <td><a href="{{$value}}">{{$value}}</a></td>
+            <td>{{.Path}}</td>
+            <td><a href="{{.Site}}">{{.Site}}</a></td>
+            <td>{{.Count}}</td>
           </tr>
           {{end}}
         </tbody>

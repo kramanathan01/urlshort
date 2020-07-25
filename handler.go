@@ -16,7 +16,7 @@ import (
 	"urlshort/persist"
 )
 
-var pathUrls = make(map[string]string)
+// var pathUrls = make(map[string]string)
 
 // MapHandler will return an http.HandlerFunc (which also
 // implements http.Handler) that will attempt to map any
@@ -84,9 +84,9 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	listTemplate := template.Must(template.New("list").Parse(listHTML))
-	getall()
+	paths := getall()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	render(w, r, listTemplate, "list", pathUrls)
+	render(w, r, listTemplate, "list", paths)
 }
 
 func getContent(file string) ([]byte, error) {
@@ -149,11 +149,13 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf)
 }
 
-func getall() {
+func getall() []persist.Short {
+	var ss []persist.Short
 	if s, ok := persist.Db.GetAll(); ok {
 		for _, v := range s {
-			// fmt.Printf("Path: %s, Site: %s, Count: %d\n", v.Path, v.Site, v.Count)
-			pathUrls[v.Path] = v.Site
+			ss = append(ss, v)
+			// pathUrls[v.Path] = v.Site
 		}
 	}
+	return ss
 }

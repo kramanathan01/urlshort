@@ -9,7 +9,7 @@ import (
 	"github.com/dgraph-io/badger/v2"
 )
 
-type short struct {
+type Short struct {
 	Path  string
 	Site  string
 	Count int
@@ -39,7 +39,7 @@ func (db *database) Open() {
 	}
 }
 
-func (s *short) gobEncode() ([]byte, error) {
+func (s *Short) gobEncode() ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(s)
@@ -50,8 +50,8 @@ func (s *short) gobEncode() ([]byte, error) {
 
 }
 
-func gobDecode(d []byte) (*short, error) {
-	var s *short
+func gobDecode(d []byte) (*Short, error) {
+	var s *Short
 	buf := bytes.NewBuffer(d)
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&s)
@@ -62,7 +62,7 @@ func gobDecode(d []byte) (*short, error) {
 }
 
 // Saves key value to DB
-func (db *database) Save(m map[string]short) error {
+func (db *database) Save(m map[string]Short) error {
 	txn := db.DB.NewTransaction(true)
 	for k, v := range m {
 		gb, _ := v.gobEncode()
@@ -76,8 +76,8 @@ func (db *database) Save(m map[string]short) error {
 }
 
 // Get single key from DB
-func (db *database) Get(k string) (*short, bool) {
-	var tr *short
+func (db *database) Get(k string) (*Short, bool) {
+	var tr *Short
 	err := db.DB.View(func(txn *badger.Txn) error {
 		i, err := txn.Get([]byte(k))
 		if err != nil {
@@ -94,8 +94,8 @@ func (db *database) Get(k string) (*short, bool) {
 }
 
 // Get all data from DB
-func (db *database) GetAll() (map[string]short, bool) {
-	var ga = make(map[string]short)
+func (db *database) GetAll() (map[string]Short, bool) {
+	var ga = make(map[string]Short)
 	err := db.DB.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = 10
