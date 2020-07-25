@@ -53,6 +53,10 @@ table.blueTable thead th:first-child {
   text-align: center;
 }
 
+.num {
+  text-align: right;
+}
+
 input.searchText {
   background-image: url('/static/searchicon.png');
   background-position: 10px 12px;
