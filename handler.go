@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"urlshort/assets"
+	"urlshort/persist"
 )
 
 var pathUrls = make(map[string]string)
@@ -38,15 +39,29 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 // SetHandler parses the file contents intp a map and returns a http.HandlerFunc
 // capable of serving requests
 func SetHandler(mfile string) http.HandlerFunc {
-	var err error
+	// var err error
 	mux := defaultMux()
+	return dbHandler(mux)
+	// pathUrls, err = parseJSON(mfile)
+	// if err != nil {
+	// 	log.Panicf("Error getting map JSON: %v", err)
+	// }
 
-	pathUrls, err = parseJSON(mfile)
-	if err != nil {
-		log.Panicf("Error getting map JSON: %v", err)
+	// return MapHandler(pathUrls, mux)
+}
+
+// DBHandler uses the database to lookup path keys
+
+func dbHandler(fallback http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		urlpath := strings.TrimLeft(r.URL.Path, "/")
+		if path, ok := persist.Db.Get(urlpath); ok {
+			http.Redirect(w, r, path.Site, http.StatusFound)
+			return
+		}
+		// Match paths in the map else
+		fallback.ServeHTTP(w, r)
 	}
-
-	return MapHandler(pathUrls, mux)
 }
 
 func defaultMux() *http.ServeMux {
@@ -69,6 +84,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	listTemplate := template.Must(template.New("list").Parse(listHTML))
+	getall()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	render(w, r, listTemplate, "list", pathUrls)
 }
@@ -131,4 +147,13 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
 	}
 	w.Write(buf)
+}
+
+func getall() {
+	if s, ok := persist.Db.GetAll(); ok {
+		for _, v := range s {
+			// fmt.Printf("Path: %s, Site: %s, Count: %d\n", v.Path, v.Site, v.Count)
+			pathUrls[v.Path] = v.Site
+		}
+	}
 }

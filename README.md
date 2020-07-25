@@ -46,6 +46,7 @@ This is a bit involved in MacOS, Yosemite onwards.
 ```
 sudo sysctl net.inet.ip.forwarding=1
 ```
+To make this survive a mac restart, add ``net.inet.ip.forwarding=1`` to /private/etc/sysctl.conf
 
 2. Create an anchor file
 

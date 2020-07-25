@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"urlshort"
+	"urlshort/persist"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -23,7 +24,12 @@ var (
 )
 
 func main() {
+
 	flag.Parse()
+
+	persist.Db.Open()
+	defer persist.Db.DB.Close()
+
 	handler := urlshort.SetHandler(mapFile)
 	addr := fmt.Sprintf("localhost:%v", *port)
 
@@ -51,7 +57,6 @@ func init() {
 		panic(err)
 	}
 	mapFile = filepath.Join(home, ".map.json")
-
 }
 
 func startServer(srv *http.Server) {
