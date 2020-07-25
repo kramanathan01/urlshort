@@ -55,7 +55,10 @@ func SetHandler(mfile string) http.HandlerFunc {
 func dbHandler(fallback http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		urlpath := strings.TrimLeft(r.URL.Path, "/")
+		log.Println(urlpath)
 		if path, ok := persist.Db.Get(urlpath); ok {
+			path.Count++
+			_ = persist.Db.Save(*path)
 			http.Redirect(w, r, path.Site, http.StatusFound)
 			return
 		}

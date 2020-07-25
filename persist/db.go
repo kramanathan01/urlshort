@@ -21,7 +21,7 @@ type database struct {
 	opts badger.Options
 }
 
-// Db: Struct that holds database handle
+// Db Struct that holds database handle
 var Db database
 
 func (db *database) Open() {
@@ -62,7 +62,7 @@ func gobDecode(d []byte) (*Short, error) {
 }
 
 // Saves key value to DB
-func (db *database) Save(m map[string]Short) error {
+func (db *database) SaveMap(m map[string]Short) error {
 	txn := db.DB.NewTransaction(true)
 	for k, v := range m {
 		gb, _ := v.gobEncode()
@@ -73,6 +73,15 @@ func (db *database) Save(m map[string]Short) error {
 		}
 	}
 	return txn.Commit()
+}
+
+// Save single key to DB
+func (db *database) Save(s Short) error {
+	err := db.DB.Update(func(txn *badger.Txn) error {
+		gb, _ := s.gobEncode()
+		return txn.Set([]byte(s.Path), []byte(gb))
+	})
+	return err
 }
 
 // Get single key from DB
